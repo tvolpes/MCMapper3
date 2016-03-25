@@ -22,13 +22,11 @@
 	SOFTWARE.
 */
 
-#include "def.h"
-#include "console.h"
+#pragma once
 
-int main( int argc, char *argv[] )
+class CGenerator
 {
-	if( !CConsole::getInstance().initialize( argc, argv ) )
-		return -1;
-	CConsole::getInstance().exit();
-	return 0;
-}
+public:
+	CGenerator();
+	virtual ~CGenerator();
+};

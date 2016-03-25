@@ -22,13 +22,38 @@
 	SOFTWARE.
 */
 
-#include "def.h"
-#include "console.h"
+#include <iostream>
+#include "maploader.h"
+#include "nbt.h"
 
-int main( int argc, char *argv[] )
+CMapLoader::CMapLoader()
 {
-	if( !CConsole::getInstance().initialize( argc, argv ) )
-		return -1;
-	CConsole::getInstance().exit();
-	return 0;
+}
+CMapLoader::~CMapLoader()
+{
+}
+
+bool CMapLoader::load( boost::filesystem::path fullPath )
+{
+	CNBTReader levelDat;
+	boost::filesystem::path levelDatPath;
+
+	levelDatPath = fullPath / "level.dat";
+	if( !boost::filesystem::is_regular_file( levelDatPath ) ) {
+		std::cout << "Failed: could not find level.dat" << std::endl;
+		return false;
+	}
+	// First load level.dat
+	if( !levelDat.read( fullPath ) )
+		return false;
+
+	// Determine what region files to load
+
+
+	return true;
+}
+
+bool CMapLoader::nextRegion()
+{
+	return true;
 }

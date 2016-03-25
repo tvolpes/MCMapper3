@@ -1,5 +1,5 @@
 /*
-	MIT License
+MIT License
 
 	Copyright (c) 2016 Timothy Volpe
 
@@ -22,13 +22,26 @@
 	SOFTWARE.
 */
 
-#include "def.h"
-#include "console.h"
+#pragma once
 
-int main( int argc, char *argv[] )
+#include <boost\filesystem.hpp>
+
+class CMapLoader
 {
-	if( !CConsole::getInstance().initialize( argc, argv ) )
-		return -1;
-	CConsole::getInstance().exit();
-	return 0;
-}
+public:
+	CMapLoader();
+	~CMapLoader();
+	/*
+		@method: load
+		@returns: if the map was loaded successfully
+		Reads level.dat and sets up the regions to be read
+	*/
+	bool load( boost::filesystem::path fullPath );
+
+	/*
+		@method: nextRegion
+		@returns: if the region was read successfully
+		Loads the next region into memory
+	*/
+	bool nextRegion();
+};

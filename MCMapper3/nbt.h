@@ -22,13 +22,15 @@
 	SOFTWARE.
 */
 
-#include "def.h"
-#include "console.h"
+#pragma once
 
-int main( int argc, char *argv[] )
+#include <boost\filesystem.hpp>
+
+class CNBTReader
 {
-	if( !CConsole::getInstance().initialize( argc, argv ) )
-		return -1;
-	CConsole::getInstance().exit();
-	return 0;
-}
+public:
+	CNBTReader();
+	~CNBTReader();
+
+	bool read( boost::filesystem::path fullPath );
+};

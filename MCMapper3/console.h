@@ -22,13 +22,41 @@
 	SOFTWARE.
 */
 
-#include "def.h"
-#include "console.h"
+#pragma once
 
-int main( int argc, char *argv[] )
+#include <vector>
+
+class CConsole
 {
-	if( !CConsole::getInstance().initialize( argc, argv ) )
-		return -1;
-	CConsole::getInstance().exit();
-	return 0;
-}
+private:
+	CConsole();
+
+	void commandHelp();
+	void commandHelp( std::string command );
+	bool commandGenerate( std::string map, std::vector<char> flags, std::string output );
+public:
+	static CConsole& getInstance();
+
+	CConsole( CConsole const& ) = delete;
+	void operator=( CConsole const& ) = delete;
+	
+	/*
+		@method: initialize
+		@returns: if program executed successfully
+		Takes the argc and argv from main, initializes the program
+	*/
+	bool initialize( int argc, char *argv[] );
+	/*
+		method: exit
+		returns: none
+		Called on exit, cleans up
+	*/
+	void exit();
+
+	/*
+		@method: run
+		@returns: if the command executed successfully
+		Runs the command specified by arguments[0]
+	*/
+	bool run( std::vector<char*> &arguments );
+};

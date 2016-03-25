@@ -22,13 +22,8 @@
 	SOFTWARE.
 */
 
-#include "def.h"
-#include "console.h"
+#pragma once
 
-int main( int argc, char *argv[] )
-{
-	if( !CConsole::getInstance().initialize( argc, argv ) )
-		return -1;
-	CConsole::getInstance().exit();
-	return 0;
-}
+#define MCMAPPER_VERSION_MAJOR 0
+#define MCMAPPER_VERSION_MINOR 1
+#define MCMAPPER_VERSION_STRING "1b"

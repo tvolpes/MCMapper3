@@ -22,13 +22,19 @@
 	SOFTWARE.
 */
 
-#include "def.h"
-#include "console.h"
+#include <iostream>
+#include "nbt.h"
 
-int main( int argc, char *argv[] )
+CNBTReader::CNBTReader()
 {
-	if( !CConsole::getInstance().initialize( argc, argv ) )
-		return -1;
-	CConsole::getInstance().exit();
-	return 0;
+}
+CNBTReader::~CNBTReader()
+{
+}
+
+bool CNBTReader::read( boost::filesystem::path fullPath )
+{
+	std::cout << "Reading level.dat" << std::endl;
+
+	return true;
 }
