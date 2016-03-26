@@ -31,7 +31,7 @@
 #include "def.h"
 #include "console.h"
 #include "maploader.h"
-#include "generator.h"
+#include "renderer.h"
 
 CConsole& CConsole::getInstance() {
 	static CConsole instance;

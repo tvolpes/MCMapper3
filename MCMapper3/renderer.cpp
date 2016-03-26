@@ -22,11 +22,9 @@
 	SOFTWARE.
 */
 
-#pragma once
+#include "renderer.h"
 
-class CGenerator
-{
-public:
-	CGenerator();
-	virtual ~CGenerator();
-};
+CRenderer::CRenderer() {
+}
+CRenderer::~CRenderer() {
+}

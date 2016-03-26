@@ -152,17 +152,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="console.cpp" />
-    <ClCompile Include="generator.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="maploader.cpp" />
     <ClCompile Include="nbt.cpp" />
+    <ClCompile Include="renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="console.h" />
     <ClInclude Include="def.h" />
-    <ClInclude Include="generator.h" />
     <ClInclude Include="maploader.h" />
     <ClInclude Include="nbt.h" />
+    <ClInclude Include="renderer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
