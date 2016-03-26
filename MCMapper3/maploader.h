@@ -1,5 +1,5 @@
 /*
-MIT License
+	MIT License
 
 	Copyright (c) 2016 Timothy Volpe
 
@@ -27,11 +27,28 @@ MIT License
 #include <boost\filesystem.hpp>
 #include <queue>
 
+#pragma pack(push, 1)
+struct ChunkLocation
+{
+	boost::int32_t offset;
+	unsigned char sectorCount;
+};
+struct RegionHeader
+{
+	ChunkLocation locations[1024];
+	boost::int32_t timestamps[1024];
+};
+#pragma pack(pop)
+
+class CRenderer;
+
 class CMapLoader
 {
 private:
 	std::queue<boost::filesystem::path> m_regionPaths;
 	unsigned int m_regionsRendered;
+
+	CRenderer *m_pRenderer;
 public:
 	CMapLoader();
 	~CMapLoader();
@@ -49,5 +66,7 @@ public:
 	*/
 	bool nextRegion();
 
+	void setRenderer( CRenderer *pRenderer );
+	CRenderer* getRenderer() const;
 	size_t getRegionCount() const;
 };

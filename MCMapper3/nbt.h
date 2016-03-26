@@ -83,7 +83,7 @@ public:
 	~CNBTReader();
 
 	bool read( boost::filesystem::path fullPath );
-	bool read( boost::filesystem::ifstream &stream, size_t start, size_t length );
+	bool read( InputStream &stream );
 };
 
 //////////
@@ -101,7 +101,7 @@ public:
 	CTag();
 	virtual ~CTag();
 
-	virtual bool read( InputStream &stream, size_t *pBytesRead, bool fullTag ) = 0;
+	virtual void read( InputStream &stream, size_t *pBytesRead, bool fullTag ) = 0;
 
 	boost::int8_t getId() const;
 	std::string getName() const;
@@ -136,7 +136,7 @@ public:
 	CTagEnd();
 	~CTagEnd();
 
-	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
 };
 
 //////////////
@@ -153,7 +153,9 @@ public:
 	CTagByte();
 	~CTagByte();
 
-	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+
+	boost::int8_t getPayload() const;
 };
 
 ///////////////
@@ -170,7 +172,9 @@ public:
 	CTagShort();
 	~CTagShort();
 
-	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+
+	boost::int16_t getPayload() const;
 };
 
 /////////////
@@ -187,7 +191,9 @@ public:
 	CTagInt();
 	~CTagInt();
 
-	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+
+	boost::int32_t getPayload() const;
 };
 
 //////////////
@@ -204,7 +210,9 @@ public:
 	CTagLong();
 	~CTagLong();
 
-	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+
+	boost::int64_t getPayload() const;
 };
 
 ///////////////
@@ -221,7 +229,9 @@ public:
 	CTagFloat();
 	~CTagFloat();
 
-	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+
+	float getPayload() const;
 };
 
 ////////////////
@@ -238,8 +248,30 @@ public:
 	CTagDouble();
 	~CTagDouble();
 
-	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+
+	double getPayload() const;
 };
+
+///////////////////
+// CTagByteArray //
+///////////////////
+
+class CTagByteArray : public CTagParent
+{
+private:
+	std::vector<boost::int32_t> m_payload;
+public:
+	static void ReadPayload( InputStream &stream, size_t *pBytesRead, boost::int32_t *pSize, boost::int8_t **pBytes );
+
+	CTagByteArray();
+	~CTagByteArray();
+
+	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+
+	std::vector<boost::int32_t> getPayload() const;
+};
+
 
 ////////////////
 // CTagString //
@@ -255,7 +287,9 @@ public:
 	CTagString();
 	~CTagString();
 
-	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+
+	std::string getPayload() const;
 };
 
 //////////////
@@ -271,7 +305,7 @@ public:
 	CTagList();
 	~CTagList();
 
-	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
 
 	boost::int8_t getChildrenId() const;
 	boost::int8_t getChildrenCount() const;
@@ -284,10 +318,27 @@ public:
 class CTagCompound : public CTagParent
 {
 public:
-	static bool ReadPayload( InputStream &stream, size_t *pBytesRead );
-
 	CTagCompound();
 	~CTagCompound();
 
-	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+};
+
+//////////////////
+// CTagIntArray //
+//////////////////
+
+class CTagIntArray : public CTagParent
+{
+private:
+	std::vector<boost::int32_t> m_payload;
+public:
+	static void ReadPayload( InputStream &stream, size_t *pBytesRead, boost::int32_t *pSize, boost::int32_t **pInts );
+
+	CTagIntArray();
+	~CTagIntArray();
+
+	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+
+	std::vector<boost::int32_t> getPayload() const;
 };

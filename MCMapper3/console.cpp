@@ -142,6 +142,7 @@ bool CConsole::commandGenerate( std::string map, std::vector<char> flags, std::s
 	boost::filesystem::path fullMapPath;
 	bool foundPath;
 	CMapLoader mapLoader;
+	CRenderer *pRenderer;
 
 	// Find the map file
 
@@ -174,6 +175,24 @@ bool CConsole::commandGenerate( std::string map, std::vector<char> flags, std::s
 	if( !mapLoader.load( fullMapPath ) )
 		return false;
 	std::cout << "Successfully loaded map" << std::endl;
+
+	// Render each region
+	std::cout << "Rendering regions (total: " << mapLoader.getRegionCount() << ")..." << std::endl;
+	pRenderer = new CRendererClassic();
+	mapLoader.setRenderer( pRenderer );
+	for( unsigned int i = 0; i < mapLoader.getRegionCount(); i++ ) {
+		// Render the next region
+		if( !mapLoader.nextRegion() )
+			return false;
+	}
+	std::cout << "Successfully rendered regions" << std::endl;
+
+	// Clean up
+	mapLoader.setRenderer( 0 );
+	if( pRenderer ) {
+		delete pRenderer;
+		pRenderer = 0;
+	}
 
 	return true;
 }

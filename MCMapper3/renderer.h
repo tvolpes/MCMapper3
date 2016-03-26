@@ -30,3 +30,14 @@ public:
 	CRenderer();
 	virtual ~CRenderer();
 };
+
+//////////////////////
+// CRendererClassic //
+//////////////////////
+
+class CRendererClassic : public CRenderer
+{
+public:
+	CRendererClassic();
+	~CRendererClassic();
+};

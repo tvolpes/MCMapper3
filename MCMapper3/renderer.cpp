@@ -28,3 +28,14 @@ CRenderer::CRenderer() {
 }
 CRenderer::~CRenderer() {
 }
+
+//////////////////////
+// CRendererClassic //
+//////////////////////
+
+CRendererClassic::CRendererClassic() {
+
+}
+CRendererClassic::~CRendererClassic() {
+
+}

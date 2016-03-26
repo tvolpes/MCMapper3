@@ -23,6 +23,8 @@
 */
 
 #include <iostream>
+#include <boost\endian\conversion.hpp>
+#include <boost\timer.hpp>
 #include "maploader.h"
 #include "nbt.h"
 
@@ -67,21 +69,97 @@ bool CMapLoader::load( boost::filesystem::path fullPath )
 bool CMapLoader::nextRegion()
 {
 	boost::filesystem::path currentPath;
+	boost::filesystem::ifstream inputStream;
+	RegionHeader regionHeader;
+	boost::timer renderTimer;
 	
-	_ASSERT_EXPR( m_regionPaths.size() > 0, "region queue was empty" );
+	_ASSERT_EXPR( m_regionPaths.size() > 0, L"region queue was empty" );
+	_ASSERT_EXPR( m_pRenderer, L"no renderer" );
 
 	// Get the current path
 	currentPath = m_regionPaths.front();
 
-	// Render this region
-	std::cout << "Rendering region " << currentPath.stem() << " (" << m_regionsRendered+1 << "/" << m_regionPaths.size() << ")..." << std::endl;
+	std::cout << " > Rendering region " << currentPath.stem() << " (" << m_regionsRendered+1 << "/" << m_regionPaths.size() << ")..." << std::endl;
+
+	// Attempt to open the region file
+	if( !boost::filesystem::is_regular_file( currentPath ) ) {
+		std::cout << " > Failed: could not open region file, skipping region" << std::endl;
+		return false;
+	}
+	inputStream.open( currentPath, std::ios::in | std::ios::binary );
+
+	// Read the chunk locations
+	for( unsigned int i = 0; i < 1024; i++ )
+	{
+		unsigned char offset[3];
+		inputStream.read( reinterpret_cast<char*>(&offset), 3 );
+		regionHeader.locations[i].offset = offset[2] + (offset[1] << 8) + (offset[0] << 16);
+		//regionHeader.locations[i].offset = boost::endian::big_to_native( regionHeader.locations[i].offset );
+		inputStream.read( reinterpret_cast<char*>(&(regionHeader.locations[i].sectorCount)), 1 );
+	}
+	// Read the chunk timestamps
+	for( unsigned int i = 0; i < 1024; i++ ){
+		inputStream.read( reinterpret_cast<char*>(&regionHeader.timestamps[i]), sizeof( boost::int32_t ) );
+		regionHeader.timestamps[i] = boost::endian::big_to_native( regionHeader.timestamps[i] );
+	}
+
+	// Load each chunk and render
+	for( unsigned int i = 0; i < 1024; i++ )
+	{
+		boost::int32_t chunkLength;
+		unsigned char compression;
+		char *pChunkData;
+		InputStream decompStream;
+		CNBTReader chunkReader;
+
+		// Check if we have a chunk here
+		if( regionHeader.locations[i].sectorCount == 0 )
+			continue;
+		// If we do, jump to it
+		inputStream.seekg( regionHeader.locations[i].offset * 4096, std::ios::beg );
+		// Read the length
+		inputStream.read( reinterpret_cast<char*>(&chunkLength), sizeof( boost::int32_t ) );
+		chunkLength = boost::endian::big_to_native( chunkLength );
+		// Read compression
+		inputStream.read( reinterpret_cast<char*>(&compression), 1 );
+		if( compression != 2 ) {
+			std::cout << " > Failed: Compressiong type was GZip, only ZLib is supported, skipping chunk" << std::endl;
+			continue;
+		}
+		// Read the chunk data
+		if( chunkLength <= 0 ) {
+			std::cout << " > Failed: found empty chunk, skipping chunk" << std::endl;
+			continue;
+		}
+		pChunkData = new char[chunkLength-1];
+		inputStream.read( pChunkData, chunkLength-1 );
+		// Setup decompression and run nbt reader
+		decompStream.push( boost::iostreams::zlib_decompressor() );
+		decompStream.push( boost::iostreams::array_source( pChunkData, chunkLength-1 ) );
+		if( !chunkReader.read( decompStream ) ) {
+			std::cout << " > Failed: could not read chunk data, skipping chunk" << std::endl;
+			continue;
+		}
+
+		delete[] pChunkData;
+	}
 
 	// Pop off the queue
 	m_regionPaths.pop();
+
+	// Show how long it took
+	std::cout << " > Finished region (t=" << renderTimer.elapsed() << "s)" << std::endl;
 
 	return true;
 }
 
 size_t CMapLoader::getRegionCount() const {
 	return m_regionPaths.size();
+}
+
+void CMapLoader::setRenderer( CRenderer *pRenderer ) {
+	m_pRenderer = pRenderer;
+}
+CRenderer* CMapLoader::getRenderer() const {
+	return m_pRenderer;
 }
