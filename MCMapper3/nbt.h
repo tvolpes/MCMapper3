@@ -24,13 +24,270 @@
 
 #pragma once
 
+#include <boost\filesystem\fstream.hpp>
+#include <boost\iostreams\filtering_stream.hpp>
+#pragma warning( disable:4244 )
+#include <boost\iostreams\filter\gzip.hpp>
+#pragma warning( default:4244 )
 #include <boost\filesystem.hpp>
+#include <boost\integer.hpp>
+#include <stack>
+#include <vector>
+
+class CTag;
+class CTagParent;
+class CTagEnd;
+class CTagByte;
+class CTagShort;
+class CTagInt;
+class CTagLong;
+class CTagFloat;
+class CTagDouble;
+class CTagByteArray;
+class CTagString;
+class CTagList;
+class CTagCompound;
+class CTagIntArray;
+
+typedef boost::iostreams::filtering_istream InputStream;
+typedef std::vector<CTag*> TagList;
+
+enum : boost::int8_t
+{
+	TAGID_END			= 0,
+	TAGID_BYTE			= 1,
+	TAGID_SHORT			= 2,
+	TAGID_INT			= 3,
+	TAGID_LONG			= 4,
+	TAGID_FLOAT			= 5,
+	TAGID_DOUBLE		= 6,
+	TAGID_BYTE_ARRAY	= 7,
+	TAGID_STRING		= 8,
+	TAGID_LIST			= 9,
+	TAGID_COMPOUND		= 10,
+	TAGID_INT_ARRAY		= 11,
+	TAGID_COUNT
+};
 
 class CNBTReader
 {
+private:
+	std::stack<CTagParent*> m_parentStack;
+	TagList m_tags;
+
+	CTag* readTag( InputStream &stream, size_t *pBytesRead, bool fullTag );
 public:
+	static CTag* createTag( boost::int8_t tagId );
+
 	CNBTReader();
 	~CNBTReader();
 
 	bool read( boost::filesystem::path fullPath );
+	bool read( boost::filesystem::ifstream &stream, size_t start, size_t length );
+};
+
+//////////
+// CTag //
+//////////
+
+class CTag
+{
+protected:
+	boost::int8_t m_tagId;
+	std::string m_tagName;
+
+	void readName( InputStream &stream, size_t *pBytesRead );
+public:
+	CTag();
+	virtual ~CTag();
+
+	virtual bool read( InputStream &stream, size_t *pBytesRead, bool fullTag ) = 0;
+
+	boost::int8_t getId() const;
+	std::string getName() const;
+	virtual bool isParent() const;
+};
+
+////////////////
+// CTagParent //
+////////////////
+
+class CTagParent : public CTag
+{
+private:
+	TagList m_children;
+public:
+	CTagParent();
+	virtual ~CTagParent();
+
+	void addChild( CTag *pTag );
+
+	TagList getChildren() const;
+	virtual bool isParent() const;
+};
+
+/////////////
+// CTagEnd //
+/////////////
+
+class CTagEnd : public CTag
+{
+public:
+	CTagEnd();
+	~CTagEnd();
+
+	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+};
+
+//////////////
+// CTagByte //
+//////////////
+
+class CTagByte : public CTag
+{
+private:
+	boost::int8_t m_payload;
+public:
+	static void ReadPayload( InputStream &stream, size_t *pBytesRead, boost::int8_t *pByte );
+
+	CTagByte();
+	~CTagByte();
+
+	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+};
+
+///////////////
+// CTagShort //
+///////////////
+
+class CTagShort : public CTag
+{
+private:
+	boost::int16_t m_payload;
+public:
+	static void ReadPayload( InputStream &stream, size_t *pBytesRead, boost::int16_t *pShort );
+
+	CTagShort();
+	~CTagShort();
+
+	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+};
+
+/////////////
+// CTagInt //
+/////////////
+
+class CTagInt : public CTag
+{
+private:
+	boost::int32_t m_payload;
+public:
+	static void ReadPayload( InputStream &stream, size_t *pBytesRead, boost::int32_t *pInt );
+
+	CTagInt();
+	~CTagInt();
+
+	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+};
+
+//////////////
+// CTagLong //
+//////////////
+
+class CTagLong : public CTag
+{
+private:
+	boost::int64_t m_payload;
+public:
+	static void ReadPayload( InputStream &stream, size_t *pBytesRead, boost::int64_t *pLong );
+
+	CTagLong();
+	~CTagLong();
+
+	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+};
+
+///////////////
+// CTagFloat //
+///////////////
+
+class CTagFloat : public CTag
+{
+private:
+	float m_payload;
+public:
+	static void ReadPayload( InputStream &stream, size_t *pBytesRead, float *pFloat );
+
+	CTagFloat();
+	~CTagFloat();
+
+	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+};
+
+////////////////
+// CTagDouble //
+////////////////
+
+class CTagDouble : public CTag
+{
+private:
+	double m_payload;
+public:
+	static void ReadPayload( InputStream &stream, size_t *pBytesRead, double *pDouble );
+
+	CTagDouble();
+	~CTagDouble();
+
+	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+};
+
+////////////////
+// CTagString //
+////////////////
+
+class CTagString : public CTag
+{
+private:
+	std::string m_payload;
+public:
+	static void ReadPayload( InputStream &stream, size_t *pBytesRead, boost::int16_t *pStringLength, char **pString );
+
+	CTagString();
+	~CTagString();
+
+	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+};
+
+//////////////
+// CTagList //
+//////////////
+
+class CTagList : public CTagParent
+{
+private:
+	boost::int8_t m_childrenId;
+	boost::int32_t m_childrenCount;
+public:
+	CTagList();
+	~CTagList();
+
+	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
+
+	boost::int8_t getChildrenId() const;
+	boost::int8_t getChildrenCount() const;
+};
+
+//////////////////
+// CTagCompound //
+//////////////////
+
+class CTagCompound : public CTagParent
+{
+public:
+	static bool ReadPayload( InputStream &stream, size_t *pBytesRead );
+
+	CTagCompound();
+	~CTagCompound();
+
+	bool read( InputStream &stream, size_t *pBytesRead, bool fullTag );
 };

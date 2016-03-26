@@ -28,6 +28,7 @@
 
 CMapLoader::CMapLoader()
 {
+	m_regionsRendered = 0;
 }
 CMapLoader::~CMapLoader()
 {
@@ -36,20 +37,51 @@ CMapLoader::~CMapLoader()
 bool CMapLoader::load( boost::filesystem::path fullPath )
 {
 	CNBTReader levelDat;
-	boost::filesystem::path levelDatPath;
+	boost::filesystem::path levelDatPath, regionsPath;
+	std::vector<boost::filesystem::path> regionFiles;
 
 	levelDatPath = fullPath / "level.dat";
 	// First load level.dat
-	if( !levelDat.read( fullPath ) )
+	if( !levelDat.read( levelDatPath ) )
 		return false;
 
 	// Determine what region files to load
-
+	regionsPath = fullPath / "region";
+	std::cout << "Evaluating regions..." << std::endl;
+	if( !boost::filesystem::is_directory( regionsPath ) ) {
+		std::cout << "Failed: Could not find regions directory" << std::endl;
+		return false;
+	}
+	// Get all the valid region files
+	for( auto &entry : boost::make_iterator_range( boost::filesystem::directory_iterator( regionsPath ), {} ) ) {
+		// If the extension is correct
+		std::string ext = entry.path().extension().string();
+		std::transform( ext.begin(), ext.end(), ext.begin(), ::tolower );
+		if( ext.compare( ".mca" ) == 0 )
+			m_regionPaths.push( entry.path() );
+	}
 
 	return true;
 }
 
 bool CMapLoader::nextRegion()
 {
+	boost::filesystem::path currentPath;
+	
+	_ASSERT_EXPR( m_regionPaths.size() > 0, "region queue was empty" );
+
+	// Get the current path
+	currentPath = m_regionPaths.front();
+
+	// Render this region
+	std::cout << "Rendering region " << currentPath.stem() << " (" << m_regionsRendered+1 << "/" << m_regionPaths.size() << ")..." << std::endl;
+
+	// Pop off the queue
+	m_regionPaths.pop();
+
 	return true;
+}
+
+size_t CMapLoader::getRegionCount() const {
+	return m_regionPaths.size();
 }

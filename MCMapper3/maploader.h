@@ -25,9 +25,13 @@ MIT License
 #pragma once
 
 #include <boost\filesystem.hpp>
+#include <queue>
 
 class CMapLoader
 {
+private:
+	std::queue<boost::filesystem::path> m_regionPaths;
+	unsigned int m_regionsRendered;
 public:
 	CMapLoader();
 	~CMapLoader();
@@ -44,4 +48,6 @@ public:
 		Loads the next region into memory
 	*/
 	bool nextRegion();
+
+	size_t getRegionCount() const;
 };

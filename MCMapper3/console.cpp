@@ -28,6 +28,7 @@
 #include <string>
 #include <algorithm>
 #include <boost\filesystem.hpp>
+#include "def.h"
 #include "console.h"
 #include "maploader.h"
 #include "generator.h"
@@ -108,6 +109,8 @@ void CConsole::exit()
 
 void CConsole::commandHelp()
 {
+	std::cout << "MCMapper 3 by Timothy Volpe (c) 2016" << std::endl;
+	std::cout << "Released under the MIT License" << std::endl;
 	std::cout << "The following commands are valid, for more info use help [command]" << std::endl;
 
 	std::cout << "HELP\t\tDisplays help information" << std::endl;
@@ -165,6 +168,8 @@ bool CConsole::commandGenerate( std::string map, std::vector<char> flags, std::s
 	}
 
 	// Load the map
+	std::cout << "\n\tMCMapper3\n\tTimothy Volpe (c) 2016\n\tVersion: " << MCMAPPER_VERSION_STRING << std::endl << std::endl;
+
 	std::cout << "Loading map at \'"<< fullMapPath.string().c_str() << "\'" << std::endl;
 	if( !mapLoader.load( fullMapPath ) )
 		return false;

@@ -81,6 +81,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>E:\C++ Lib Folder\boost2015;$(IncludePath)</IncludePath>
     <LibraryPath>E:\C++ Lib Folder\boost2015\stage\lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)build\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
