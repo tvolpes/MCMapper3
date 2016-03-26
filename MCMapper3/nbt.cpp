@@ -23,6 +23,11 @@
 */
 
 #include <iostream>
+#include <boost\filesystem\fstream.hpp>
+#include <boost\iostreams\filtering_stream.hpp>
+#pragma warning( disable:4244 )
+#include <boost\iostreams\filter\gzip.hpp>
+#pragma warning( default:4244 )
 #include "nbt.h"
 
 CNBTReader::CNBTReader()
@@ -34,7 +39,37 @@ CNBTReader::~CNBTReader()
 
 bool CNBTReader::read( boost::filesystem::path fullPath )
 {
+	boost::filesystem::ifstream inputStream;
+	boost::iostreams::filtering_istream decompStream;
+
 	std::cout << "Reading level.dat" << std::endl;
+
+	// Open a stream and decompress
+	try
+	{
+		// Make sure it exists and is valid
+		if( !boost::filesystem::exists( fullPath ) ) {
+			std::cout << "Failed: could not open level.dat because it does not exist" << std::endl;
+			return false;
+		}
+		else if( !boost::filesystem::is_regular_file( fullPath ) ) {
+			std::cout << "Failed: could not open level.dat because it is invalid" << std::endl;
+			return false;
+		}
+		// Open the stream
+		inputStream.open( fullPath, std::ios::in | std::ios::binary );
+		if( !inputStream ) {
+			std::cout << "Failed: could not open level.dat" << std::endl;
+			return false;
+		}
+		// Setup decompression filter
+		decompStream.push( boost::iostreams::gzip_decompressor() );
+		decompStream.push( inputStream );
+	}
+	catch( const boost::filesystem::filesystem_error &e ) {
+		std::cout << "Failed: could not open level.dat (" << e.what() << ")" << std::endl;
+		return false;
+	}
 
 	return true;
 }

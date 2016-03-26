@@ -39,10 +39,6 @@ bool CMapLoader::load( boost::filesystem::path fullPath )
 	boost::filesystem::path levelDatPath;
 
 	levelDatPath = fullPath / "level.dat";
-	if( !boost::filesystem::is_regular_file( levelDatPath ) ) {
-		std::cout << "Failed: could not find level.dat" << std::endl;
-		return false;
-	}
 	// First load level.dat
 	if( !levelDat.read( fullPath ) )
 		return false;

@@ -90,6 +90,9 @@ bool CConsole::run( std::vector<char*> &arguments )
 			output = arguments[3];
 		return this->commandGenerate( map, flags, output );
 	}
+	else if( command.compare( "genblocks" ) == 0 ) {
+		return this->commandGenBlocks();
+	}
 	else {
 		std::cout << "\'" << arguments[0] << "\' is not a valid command" << std::endl;
 		this->commandHelp();
@@ -122,6 +125,10 @@ void CConsole::commandHelp( std::string command )
 		std::cout << "Generates map data from the save file specified by [save]\n[save] can be either a path relative to the .minecraft %appdata% folder or an absolute path.\nOutput path is optional, will be outputted to current directory if none is specified" << std::endl;
 		std::cout << "Flag format is -[flag chars], valid flags are:" << std::endl;
 		std::cout << "O\tWill ignore transparency, including water" << std::endl;
+	}
+	else if( command.compare( "genblocks" ) == 0 ) {
+		std::cout << "Usage: genblocks" << std::endl;
+		std::cout << "Generates a config file for block colors based on Minecraft's data" << std::endl;
 	}
 	else
 		std::cout << "No help found for command" << std::endl;
@@ -163,5 +170,9 @@ bool CConsole::commandGenerate( std::string map, std::vector<char> flags, std::s
 		return false;
 	std::cout << "Successfully loaded map" << std::endl;
 
+	return true;
+}
+bool CConsole::commandGenBlocks()
+{
 	return true;
 }

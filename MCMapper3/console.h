@@ -34,6 +34,7 @@ private:
 	void commandHelp();
 	void commandHelp( std::string command );
 	bool commandGenerate( std::string map, std::vector<char> flags, std::string output );
+	bool commandGenBlocks();
 public:
 	static CConsole& getInstance();
 
