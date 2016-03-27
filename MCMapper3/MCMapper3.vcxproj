@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="blocks.cpp" />
     <ClCompile Include="console.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="maploader.cpp" />
@@ -158,6 +159,7 @@
     <ClCompile Include="renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="blocks.h" />
     <ClInclude Include="console.h" />
     <ClInclude Include="def.h" />
     <ClInclude Include="maploader.h" />

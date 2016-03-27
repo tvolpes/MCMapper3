@@ -171,6 +171,8 @@ bool CConsole::commandGenerate( std::string map, std::vector<char> flags, std::s
 	// Load the map
 	std::cout << "\n\tMCMapper3\n\tTimothy Volpe (c) 2016\n\tVersion: " << MCMAPPER_VERSION_STRING << std::endl << std::endl;
 
+	if( !mapLoader.initialize() )
+		return false;
 	std::cout << "Loading map at \'"<< fullMapPath.string().c_str() << "\'" << std::endl;
 	if( !mapLoader.load( fullMapPath ) )
 		return false;

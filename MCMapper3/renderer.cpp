@@ -28,6 +28,7 @@
 #pragma warning( default:4996 )
 #include "renderer.h"
 #include "maploader.h"
+#include "blocks.h"
 
 int CRenderer::PixelToBlockRatios[ZOOM_LEVELS] ={ 1, 2, 4, 8 };
 
@@ -149,7 +150,7 @@ bool CRendererClassic::beginRegion( std::string mapName, std::string regionName 
 	return true;
 }
 
-void CRendererClassic::renderChunk( ChunkData *pChunkData )
+void CRendererClassic::renderChunk( ChunkData *pChunkData, CBlockColors *pBlockColors )
 {
 	int xPos, zPos;
 	boost::gil::rgb8_image_t::view_t imageView;
@@ -169,14 +170,33 @@ void CRendererClassic::renderChunk( ChunkData *pChunkData )
 		{
 			int height, section, heightOffset;
 			unsigned char blockId;
+			boost::gil::rgb8_pixel_t color;
+			float blockShadowMult;
 
 			// Find the top block
-			height = pChunkData->HeightMap[x+z*16];
+			if( pChunkData->HeightMap[x+z*16] != 0 )
+				height = pChunkData->HeightMap[x+z*16]-1;
+			else
+				height = 0;
 			section = height / SECTION_HEIGHT;
 			heightOffset = height - (section*SECTION_HEIGHT);
 			blockId = pChunkData->Sections[section].BlockIds[x+(z*16)+(heightOffset*CHUNK_LENGTH*CHUNK_LENGTH)];
+			color = pBlockColors->getBlockPixel( blockId );
 
-			imageView( x+xPos*16, z+zPos*16 ) = boost::gil::rgb8_pixel_t( (unsigned char)(((float)pChunkData->HeightMap[x+z*16] / 255.0f) * 255.0f), (unsigned char)(((float)pChunkData->HeightMap[x+z*16] / 255.0f) * 255.0f), (unsigned char)(((float)pChunkData->HeightMap[x+z*16] / 255.0f) * 255.0f) );
+			// Determine if we apply a shadow to show depth
+			// Left gets shadow, right gets highlight
+			blockShadowMult = 1.0f;
+			if( x != 0 ) {
+				if( pChunkData->HeightMap[(x-1)+z*16] > pChunkData->HeightMap[x+z*16] )
+					blockShadowMult = 0.5f;
+			}
+			/*else if( x != 15 ) {
+				if( pChunkData->HeightMap[(x+1)+z*16] > pChunkData->HeightMap[x+z*16] )
+					blockShadowMult = 0.9f;
+			}*/
+
+			imageView( x+xPos*16, z+zPos*16 ) = boost::gil::rgb8_pixel_t( color[0] * blockShadowMult, color[1] * blockShadowMult, color[2] * blockShadowMult );
+			//imageView( x+xPos*16, z+zPos*16 ) = boost::gil::rgb8_pixel_t( (unsigned char)(((float)pChunkData->HeightMap[x+z*16] / 255.0f) * 255.0f), (unsigned char)(((float)pChunkData->HeightMap[x+z*16] / 255.0f) * 255.0f), (unsigned char)(((float)pChunkData->HeightMap[x+z*16] / 255.0f) * 255.0f) );
 		}
 	}
 }

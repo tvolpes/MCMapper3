@@ -28,17 +28,36 @@
 #include "maploader.h"
 #include "nbt.h"
 #include "renderer.h"
+#include "blocks.h"
 
 CMapLoader::CMapLoader()
 {
 	m_mapName = "";
 	m_regionsRendered = 0;
 	m_regionCount = 0;
+	m_pRenderer = 0;
+	m_pBlockColors = 0;
 }
 CMapLoader::~CMapLoader()
 {
+	m_pRenderer = 0;
+	if( m_pBlockColors ) {
+		delete m_pBlockColors;
+		m_pBlockColors = 0;
+	}
 }
 
+bool CMapLoader::initialize()
+{
+	// Load  block colors
+	std::cout << "Loading block data..." << std::endl;
+	m_pBlockColors = new CBlockColors();
+	if( !m_pBlockColors->loadBlockColors() )
+		return false;
+	std::cout << "Successfully loaded block data" << std::endl;
+
+	return true;
+}
 bool CMapLoader::load( boost::filesystem::path fullPath )
 {
 	CNBTReader levelDat;
@@ -158,7 +177,7 @@ bool CMapLoader::nextRegion()
 		pParsedChunk = this->parseChunkData( chunkReader );
 		if( !pParsedChunk )
 			return false;
-		m_pRenderer->renderChunk( pParsedChunk );
+		m_pRenderer->renderChunk( pParsedChunk, m_pBlockColors );
 		delete pParsedChunk;
 		pParsedChunk = 0;
 	}

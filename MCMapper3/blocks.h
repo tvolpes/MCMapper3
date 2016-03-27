@@ -24,52 +24,20 @@
 
 #pragma once
 
-#include <boost\filesystem.hpp>
 #include <boost\gil\gil_all.hpp>
-#include <string>
+#include <map>
 
-struct ChunkData;
-class CBlockColors;
+#define DEFAULT_BLOCKS "data\\default-blocks.xml"
 
-#define ZOOM_LEVELS 4
-#define REGION_PIXEL_LENGTH 512
-
-
-class CRenderer
+class CBlockColors
 {
-protected:
-	boost::filesystem::path m_outputPath;
-	std::string m_regionName;
-	boost::gil::rgb8_image_t m_regionImage;
-
-	bool generateZoom();
+private:
+	std::map<int, boost::gil::rgb8_pixel_t> m_blockColors;
 public:
-	static int PixelToBlockRatios[ZOOM_LEVELS];
+	CBlockColors();
+	~CBlockColors();
 
-	CRenderer();
-	virtual ~CRenderer();
+	bool loadBlockColors();
 
-	virtual bool beginRegion( std::string mapName, std::string regionName );
-	bool finishRegion();
-
-	virtual void renderChunk( ChunkData *pChunkData, CBlockColors *pBlockColors ) = 0;
-
-	virtual unsigned int getChunkDataFlags() = 0;
-};
-
-//////////////////////
-// CRendererClassic //
-//////////////////////
-
-class CRendererClassic : public CRenderer
-{
-public:
-	CRendererClassic();
-	~CRendererClassic();
-
-	bool beginRegion( std::string mapName, std::string regionName );
-
-	void renderChunk( ChunkData *pChunkData, CBlockColors *pBlockColors );
-
-	unsigned int getChunkDataFlags();
+	boost::gil::rgb8_pixel_t getBlockPixel( int blockId );
 };

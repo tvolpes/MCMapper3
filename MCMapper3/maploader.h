@@ -64,6 +64,7 @@ struct ChunkData
 };
 
 class CRenderer;
+class CBlockColors;
 
 class CMapLoader
 {
@@ -75,11 +76,20 @@ private:
 	unsigned int m_regionsRendered;
 
 	CRenderer *m_pRenderer;
+	CBlockColors *m_pBlockColors;
 
 	ChunkData* parseChunkData( CNBTReader &nbtReader );
 public:
 	CMapLoader();
 	~CMapLoader();
+
+	/*
+		@method: initialize
+		@returns: if initialization was successful
+		Loads block colors
+	*/
+	bool initialize();
+
 	/*
 		@method: load
 		@returns: if the map was loaded successfully
