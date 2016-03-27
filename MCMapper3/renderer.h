@@ -30,12 +30,21 @@
 
 struct ChunkData;
 
+#define ZOOM_LEVELS 4
+#define REGION_PIXEL_LENGTH 512
+
+
 class CRenderer
 {
 protected:
 	boost::filesystem::path m_outputPath;
+	std::string m_regionName;
 	boost::gil::rgb8_image_t m_regionImage;
+
+	bool generateZoom();
 public:
+	static int PixelToBlockRatios[ZOOM_LEVELS];
+
 	CRenderer();
 	virtual ~CRenderer();
 

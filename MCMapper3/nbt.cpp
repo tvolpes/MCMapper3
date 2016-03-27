@@ -323,10 +323,8 @@ CTag* CTagParent::getChildPath( std::string path, boost::int8_t type )
 			std::cout << "Could not find tag \'" << path.c_str() << "\'" << std::endl;
 			return 0;
 		}
-		// Check if its a parent
-		if( pNextTag->isParent() )
-			pCurrentParent = reinterpret_cast<CTagParent*>(pNextTag);
-		else if( it == tokens.end()-1 ) {
+		// Check if we're at the end
+		if( it == tokens.end()-1 ) {
 			if( pNextTag->getId() == type )
 				return pNextTag;
 			else {
@@ -334,12 +332,13 @@ CTag* CTagParent::getChildPath( std::string path, boost::int8_t type )
 				return 0;
 			}
 		}
+		else if( pNextTag->isParent() )
+			pCurrentParent = reinterpret_cast<CTagParent*>(pNextTag);
 		else {
 			std::cout << "Invalid path \'" << path.c_str() << "\'" << std::endl;
 		}
 	}
 
-	_ASSERT_EXPR( 0, L"unhandled logic?" );
 	return 0;
 }
 
@@ -579,12 +578,12 @@ void CTagByteArray::read( InputStream &stream, size_t *pBytesRead, bool fullTag 
 		this->readName( stream, pBytesRead );
 	CTagByteArray::ReadPayload( stream, pBytesRead, &size, &pBytes );
 	if( size > 0 && pBytes ) {
-		m_payload = std::vector<boost::int32_t>( pBytes, pBytes + size );
+		m_payload = std::vector<boost::int8_t>( pBytes, pBytes + size );
 		delete[] pBytes;
 	}
 }
 
-std::vector<boost::int32_t> CTagByteArray::getPayload() const {
+std::vector<boost::int8_t> CTagByteArray::getPayload() const {
 	return m_payload;
 }
 

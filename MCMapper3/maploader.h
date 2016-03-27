@@ -29,11 +29,13 @@
 #include "nbt.h"
 
 #define CHUNK_LENGTH 16
+#define SECTION_HEIGHT 16
 
 enum : unsigned int
 {
 	CHUNKDATA_NONE			= 1 << 0,
-	CHUNKDATA_HEIGHTMAP		= 1 << 1
+	CHUNKDATA_HEIGHTMAP		= 1 << 1,
+	CHUNKDATA_BLOCKIDS		= 1 << 2
 };
 
 #pragma pack(push, 1)
@@ -49,10 +51,16 @@ struct RegionHeader
 };
 #pragma pack(pop)
 
+struct ChunkSection
+{
+	boost::int8_t Y;
+	boost::int8_t BlockIds[4096];
+};
 struct ChunkData
 {
 	boost::int32_t xPos, zPos;
 	boost::int32_t HeightMap[CHUNK_LENGTH*CHUNK_LENGTH];
+	ChunkSection Sections[16];
 };
 
 class CRenderer;
@@ -63,6 +71,7 @@ private:
 	std::string m_mapName;
 
 	std::queue<boost::filesystem::path> m_regionPaths;
+	unsigned int m_regionCount;
 	unsigned int m_regionsRendered;
 
 	CRenderer *m_pRenderer;

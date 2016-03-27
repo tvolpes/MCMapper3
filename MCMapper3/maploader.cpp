@@ -33,6 +33,7 @@ CMapLoader::CMapLoader()
 {
 	m_mapName = "";
 	m_regionsRendered = 0;
+	m_regionCount = 0;
 }
 CMapLoader::~CMapLoader()
 {
@@ -66,6 +67,7 @@ bool CMapLoader::load( boost::filesystem::path fullPath )
 		if( ext.compare( ".mca" ) == 0 )
 			m_regionPaths.push( entry.path() );
 	}
+	m_regionCount = m_regionPaths.size();
 
 	return true;
 }
@@ -83,7 +85,7 @@ bool CMapLoader::nextRegion()
 	// Get the current path
 	currentPath = m_regionPaths.front();
 
-	std::cout << " > Rendering region " << currentPath.stem() << " (" << m_regionsRendered+1 << "/" << m_regionPaths.size() << ")..." << std::endl;
+	std::cout << " > Rendering region " << currentPath.stem() << " (" << m_regionsRendered+1 << "/" << m_regionCount << ")..." << std::endl;
 
 	// Attempt to open the region file
 	if( !boost::filesystem::is_regular_file( currentPath ) ) {
@@ -167,6 +169,7 @@ bool CMapLoader::nextRegion()
 
 	// Show how long it took
 	std::cout << " > Finished region (t=" << renderTimer.elapsed() << "s)" << std::endl;
+	m_regionsRendered++;
 
 	return true;
 }
@@ -177,6 +180,9 @@ ChunkData* CMapLoader::parseChunkData( CNBTReader &nbtReader )
 	CTagCompound *pRootTag;
 	CTagInt *pXpos, *pZpos;
 	CTagIntArray *pHeightMap;
+	CTagList *pSections;
+	TagList sectionTags;
+	int section;
 
 	if( nbtReader.getRootTags().size() < 1 ) {
 		std::cout << " > Failed: Could not parse empty chunk, skipping chunk" << std::endl;
@@ -191,14 +197,13 @@ ChunkData* CMapLoader::parseChunkData( CNBTReader &nbtReader )
 
 	// Save the position
 	pXpos = reinterpret_cast<CTagInt*>(pRootTag->getChildPath( "Level.xPos", TAGID_INT ));
-	if( !pXpos )
-		return 0;
 	pZpos = reinterpret_cast<CTagInt*>(pRootTag->getChildPath( "Level.zPos", TAGID_INT ));
-	if( !pZpos )
-		return 0;
 	pHeightMap = reinterpret_cast<CTagIntArray*>(pRootTag->getChildPath( "Level.HeightMap", TAGID_INT_ARRAY ));
-	if( !pHeightMap )
+	pSections = reinterpret_cast<CTagList*>(pRootTag->getChildPath( "Level.Sections", TAGID_LIST ));
+	if( !pXpos || !pZpos || !pHeightMap || !pSections ) {
+		std::cout << " > Failed: invalid chunk data" << std::endl;
 		return 0;
+	}
 
 	pChunkData = new ChunkData();
 	pChunkData->xPos = pXpos->getPayload();
@@ -207,15 +212,47 @@ ChunkData* CMapLoader::parseChunkData( CNBTReader &nbtReader )
 	// Save the height map
 	if( pHeightMap->getPayload().size() != CHUNK_LENGTH*CHUNK_LENGTH ) {
 		std::cout << " > Failed: invalid height map dimensions, skipping chunk" << std::endl;
-		return false;
+		delete pChunkData;
+		return 0;
 	}
-	memcpy( &pChunkData->HeightMap, &pHeightMap->getPayload()[0], sizeof( boost::int32_t )*256 );
+	memcpy( &pChunkData->HeightMap[0], &pHeightMap->getPayload()[0], sizeof( boost::int32_t )*256 );
+
+	// Save the block sections
+	sectionTags = pSections->getChildren();
+	section = 0;
+	for( auto it = sectionTags.begin(); it != sectionTags.end(); it++ )
+	{
+		ChunkSection sectionData;
+		CTagList *pCurrentSection;
+		CTagByte *pY;
+		CTagByteArray *pBlockIds;
+
+		if( (*it)->getId() != TAGID_COMPOUND ) {
+			std::cout << " > Failed: invalid section tag, skipping chunk" << std::endl;
+			delete pChunkData;
+			return 0;
+		}
+		pCurrentSection = reinterpret_cast<CTagList*>((*it));
+		pY = reinterpret_cast<CTagByte*>(pCurrentSection->getChildName( "Y" ));
+		pBlockIds = reinterpret_cast<CTagByteArray*>(pCurrentSection->getChildName( "Blocks" ));
+		if( !pY || !pBlockIds ) {
+			std::cout << " > Failed: invalid section tag, skipping chunk" << std::endl;
+			delete pChunkData;
+			return 0;
+		}
+		// Copy the data
+		sectionData.Y = pY->getPayload();
+		memcpy( &sectionData.BlockIds[0], &pBlockIds->getPayload()[0], 4096 );
+
+		pChunkData->Sections[section] = sectionData;
+		section++;
+	}
 
 	return pChunkData;
 }
 
 size_t CMapLoader::getRegionCount() const {
-	return m_regionPaths.size();
+	return m_regionCount;
 }
 
 void CMapLoader::setRenderer( CRenderer *pRenderer ) {

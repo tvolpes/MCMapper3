@@ -266,7 +266,7 @@ public:
 class CTagByteArray : public CTag
 {
 private:
-	std::vector<boost::int32_t> m_payload;
+	std::vector<boost::int8_t> m_payload;
 public:
 	static void ReadPayload( InputStream &stream, size_t *pBytesRead, boost::int32_t *pSize, boost::int8_t **pBytes );
 
@@ -275,7 +275,7 @@ public:
 
 	void read( InputStream &stream, size_t *pBytesRead, bool fullTag );
 
-	std::vector<boost::int32_t> getPayload() const;
+	std::vector<boost::int8_t> getPayload() const;
 };
 
 
