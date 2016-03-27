@@ -24,11 +24,27 @@
 
 #pragma once
 
+#include <boost\filesystem.hpp>
+#include <boost\gil\gil_all.hpp>
+#include <string>
+
+struct ChunkData;
+
 class CRenderer
 {
+protected:
+	boost::filesystem::path m_outputPath;
+	boost::gil::rgb8_image_t m_regionImage;
 public:
 	CRenderer();
 	virtual ~CRenderer();
+
+	virtual bool beginRegion( std::string mapName, std::string regionName );
+	bool finishRegion();
+
+	virtual void renderChunk( ChunkData *pChunkData ) = 0;
+
+	virtual unsigned int getChunkDataFlags() = 0;
 };
 
 //////////////////////
@@ -40,4 +56,10 @@ class CRendererClassic : public CRenderer
 public:
 	CRendererClassic();
 	~CRendererClassic();
+
+	bool beginRegion( std::string mapName, std::string regionName );
+
+	void renderChunk( ChunkData *pChunkData );
+
+	unsigned int getChunkDataFlags();
 };

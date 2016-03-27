@@ -25,6 +25,8 @@
 #include "def.h"
 #include "console.h"
 
+#pragma comment( lib, "libjpeg.lib" )
+
 int main( int argc, char *argv[] )
 {
 	if( !CConsole::getInstance().initialize( argc, argv ) )

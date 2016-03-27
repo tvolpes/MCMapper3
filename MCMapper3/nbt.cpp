@@ -24,6 +24,7 @@
 
 #include <iostream>
 #include <boost\endian\conversion.hpp>
+#include <boost\algorithm\string.hpp>
 #include "nbt.h"
 
 CTag* CNBTReader::createTag( boost::int8_t tagId )
@@ -65,15 +66,7 @@ CNBTReader::CNBTReader()
 }
 CNBTReader::~CNBTReader()
 {
-	// Delete all the tags
-	for( TagList::iterator it = m_tags.begin(); it != m_tags.end(); it++ )
-	{
-		if( (*it) ) {
-			delete (*it);
-			(*it) = 0;
-		}
-	}
-	m_tags.clear();
+	this->deleteTags();
 }
 
 CTag* CNBTReader::readTag( InputStream &stream, size_t *pBytesRead, bool fullTag = true )
@@ -99,6 +92,13 @@ CTag* CNBTReader::readTag( InputStream &stream, size_t *pBytesRead, bool fullTag
 	pTag = this->createTag( tagId );
 	if( !pTag )
 		return 0;
+
+	// If it has no parents its a root tag
+	if( m_parentStack.empty() )
+		m_rootTags.push_back( pTag );
+	// If not assign it to parent
+	else
+		m_parentStack.top()->addChild( pTag );
 
 	// Check if its an end tag
 	if( pTag->getId() == TAGID_END ) {
@@ -212,9 +212,6 @@ bool CNBTReader::read( InputStream &stream )
 
 			// Add it to the unsorted tag list
 			m_tags.push_back( pTag );
-			// Assign it to it's parent
-			if( !m_parentStack.empty() )
-				m_parentStack.top()->addChild( pTag );
 		}
 	}
 	catch( const boost::filesystem::filesystem_error &e ) {
@@ -223,6 +220,23 @@ bool CNBTReader::read( InputStream &stream )
 	}
 
 	return true;
+}
+void CNBTReader::deleteTags()
+{
+	// Delete all the tags
+	for( TagList::iterator it = m_tags.begin(); it != m_tags.end(); it++ )
+	{
+		if( (*it) ) {
+			delete (*it);
+			(*it) = 0;
+		}
+	}
+	m_tags.clear();
+	m_rootTags.clear();
+}
+
+TagList CNBTReader::getRootTags() const {
+	return m_rootTags;
 }
 
 //////////
@@ -281,6 +295,52 @@ TagList CTagParent::getChildren() const {
 }
 bool CTagParent::isParent() const {
 	return true;
+}
+CTag* CTagParent::getChildName( std::string name )
+{
+	// Find it in the children list
+	for( auto it = m_children.begin(); it != m_children.end(); it++ ) {
+		if( (*it)->getName().compare( name ) == 0 ) {
+			return (*it);
+		}
+	}
+	return 0;
+}
+CTag* CTagParent::getChildPath( std::string path, boost::int8_t type )
+{
+	std::vector<std::string> tokens;
+	CTag *pNextTag;
+	CTagParent *pCurrentParent;
+
+	// Split into tokens
+	boost::split( tokens, path, boost::is_any_of( "." ) );
+	pCurrentParent = this;
+	for( auto it = tokens.begin(); it != tokens.end(); it++ )
+	{
+		// Search for
+		pNextTag = pCurrentParent->getChildName( (*it) );
+		if( !pNextTag ) {
+			std::cout << "Could not find tag \'" << path.c_str() << "\'" << std::endl;
+			return 0;
+		}
+		// Check if its a parent
+		if( pNextTag->isParent() )
+			pCurrentParent = reinterpret_cast<CTagParent*>(pNextTag);
+		else if( it == tokens.end()-1 ) {
+			if( pNextTag->getId() == type )
+				return pNextTag;
+			else {
+				std::cout << "Invalid type for tag specified by path \'" << path.c_str() << "\'" << std::endl;
+				return 0;
+			}
+		}
+		else {
+			std::cout << "Invalid path \'" << path.c_str() << "\'" << std::endl;
+		}
+	}
+
+	_ASSERT_EXPR( 0, L"unhandled logic?" );
+	return 0;
 }
 
 /////////////
@@ -505,6 +565,7 @@ void CTagByteArray::ReadPayload( InputStream &stream, size_t *pBytesRead, boost:
 }
 
 CTagByteArray::CTagByteArray() {
+	m_tagId = TAGID_BYTE_ARRAY;
 }
 CTagByteArray::~CTagByteArray() {
 }
@@ -645,7 +706,6 @@ void CTagIntArray::ReadPayload( InputStream &stream, size_t *pBytesRead, boost::
 
 CTagIntArray::CTagIntArray() {
 	m_tagId = TAGID_INT_ARRAY;
-
 }
 CTagIntArray::~CTagIntArray() {
 }

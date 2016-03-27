@@ -73,6 +73,7 @@ class CNBTReader
 {
 private:
 	std::stack<CTagParent*> m_parentStack;
+	TagList m_rootTags;
 	TagList m_tags;
 
 	CTag* readTag( InputStream &stream, size_t *pBytesRead, bool fullTag );
@@ -84,6 +85,9 @@ public:
 
 	bool read( boost::filesystem::path fullPath );
 	bool read( InputStream &stream );
+	void deleteTags();
+
+	TagList getRootTags() const;
 };
 
 //////////
@@ -124,6 +128,8 @@ public:
 
 	TagList getChildren() const;
 	virtual bool isParent() const;
+	CTag* getChildName( std::string name );
+	CTag* getChildPath( std::string path, boost::int8_t type );
 };
 
 /////////////
@@ -257,7 +263,7 @@ public:
 // CTagByteArray //
 ///////////////////
 
-class CTagByteArray : public CTagParent
+class CTagByteArray : public CTag
 {
 private:
 	std::vector<boost::int32_t> m_payload;
@@ -328,7 +334,7 @@ public:
 // CTagIntArray //
 //////////////////
 
-class CTagIntArray : public CTagParent
+class CTagIntArray : public CTag
 {
 private:
 	std::vector<boost::int32_t> m_payload;

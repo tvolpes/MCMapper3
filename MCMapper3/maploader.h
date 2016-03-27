@@ -26,6 +26,15 @@
 
 #include <boost\filesystem.hpp>
 #include <queue>
+#include "nbt.h"
+
+#define CHUNK_LENGTH 16
+
+enum : unsigned int
+{
+	CHUNKDATA_NONE			= 1 << 0,
+	CHUNKDATA_HEIGHTMAP		= 1 << 1
+};
 
 #pragma pack(push, 1)
 struct ChunkLocation
@@ -40,15 +49,25 @@ struct RegionHeader
 };
 #pragma pack(pop)
 
+struct ChunkData
+{
+	boost::int32_t xPos, zPos;
+	boost::int32_t HeightMap[CHUNK_LENGTH*CHUNK_LENGTH];
+};
+
 class CRenderer;
 
 class CMapLoader
 {
 private:
+	std::string m_mapName;
+
 	std::queue<boost::filesystem::path> m_regionPaths;
 	unsigned int m_regionsRendered;
 
 	CRenderer *m_pRenderer;
+
+	ChunkData* parseChunkData( CNBTReader &nbtReader );
 public:
 	CMapLoader();
 	~CMapLoader();

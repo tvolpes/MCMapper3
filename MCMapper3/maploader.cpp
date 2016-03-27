@@ -27,9 +27,11 @@
 #include <boost\timer.hpp>
 #include "maploader.h"
 #include "nbt.h"
+#include "renderer.h"
 
 CMapLoader::CMapLoader()
 {
+	m_mapName = "";
 	m_regionsRendered = 0;
 }
 CMapLoader::~CMapLoader()
@@ -41,6 +43,8 @@ bool CMapLoader::load( boost::filesystem::path fullPath )
 	CNBTReader levelDat;
 	boost::filesystem::path levelDatPath, regionsPath;
 	std::vector<boost::filesystem::path> regionFiles;
+
+	m_mapName = fullPath.string().substr( fullPath.string().find_last_of( "\\" )+1 );
 
 	levelDatPath = fullPath / "level.dat";
 	// First load level.dat
@@ -104,6 +108,7 @@ bool CMapLoader::nextRegion()
 	}
 
 	// Load each chunk and render
+	m_pRenderer->beginRegion( m_mapName, currentPath.stem().string() );
 	for( unsigned int i = 0; i < 1024; i++ )
 	{
 		boost::int32_t chunkLength;
@@ -111,6 +116,7 @@ bool CMapLoader::nextRegion()
 		char *pChunkData;
 		InputStream decompStream;
 		CNBTReader chunkReader;
+		ChunkData *pParsedChunk;
 
 		// Check if we have a chunk here
 		if( regionHeader.locations[i].sectorCount == 0 )
@@ -140,9 +146,21 @@ bool CMapLoader::nextRegion()
 			std::cout << " > Failed: could not read chunk data, skipping chunk" << std::endl;
 			continue;
 		}
+		boost::iostreams::close( decompStream );
+		if( pChunkData ) {
+			delete[] pChunkData;
+			pChunkData = 0;
+		}
 
-		delete[] pChunkData;
+		// Parse the data
+		pParsedChunk = this->parseChunkData( chunkReader );
+		if( !pParsedChunk )
+			return false;
+		m_pRenderer->renderChunk( pParsedChunk );
+		delete pParsedChunk;
+		pParsedChunk = 0;
 	}
+	m_pRenderer->finishRegion();
 
 	// Pop off the queue
 	m_regionPaths.pop();
@@ -151,6 +169,49 @@ bool CMapLoader::nextRegion()
 	std::cout << " > Finished region (t=" << renderTimer.elapsed() << "s)" << std::endl;
 
 	return true;
+}
+
+ChunkData* CMapLoader::parseChunkData( CNBTReader &nbtReader )
+{
+	ChunkData *pChunkData;
+	CTagCompound *pRootTag;
+	CTagInt *pXpos, *pZpos;
+	CTagIntArray *pHeightMap;
+
+	if( nbtReader.getRootTags().size() < 1 ) {
+		std::cout << " > Failed: Could not parse empty chunk, skipping chunk" << std::endl;
+		return 0;
+	}
+	else if( nbtReader.getRootTags()[0]->getId() != TAGID_COMPOUND ) {
+		std::cout << " > Failed: Could not find root tag, skipping chunk" << std::endl;
+		return 0;
+	}
+
+	pRootTag = reinterpret_cast<CTagCompound*>(nbtReader.getRootTags()[0]);
+
+	// Save the position
+	pXpos = reinterpret_cast<CTagInt*>(pRootTag->getChildPath( "Level.xPos", TAGID_INT ));
+	if( !pXpos )
+		return 0;
+	pZpos = reinterpret_cast<CTagInt*>(pRootTag->getChildPath( "Level.zPos", TAGID_INT ));
+	if( !pZpos )
+		return 0;
+	pHeightMap = reinterpret_cast<CTagIntArray*>(pRootTag->getChildPath( "Level.HeightMap", TAGID_INT_ARRAY ));
+	if( !pHeightMap )
+		return 0;
+
+	pChunkData = new ChunkData();
+	pChunkData->xPos = pXpos->getPayload();
+	pChunkData->zPos = pZpos->getPayload();
+
+	// Save the height map
+	if( pHeightMap->getPayload().size() != CHUNK_LENGTH*CHUNK_LENGTH ) {
+		std::cout << " > Failed: invalid height map dimensions, skipping chunk" << std::endl;
+		return false;
+	}
+	memcpy( &pChunkData->HeightMap, &pHeightMap->getPayload()[0], sizeof( boost::int32_t )*256 );
+
+	return pChunkData;
 }
 
 size_t CMapLoader::getRegionCount() const {
