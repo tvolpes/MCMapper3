@@ -15,3 +15,7 @@ Will also have support for modded blocks
 2. Requires boost 1.59 with zlib (used 1.2.8)
 3. Requires libpng (used 1.6.21)
 4. May have to play around with the include and library directories to point to where your boost and libpng are stored
+
+## Usage Instructions
+
+Run the programs 'help' command for more detailed instructions. Open 'viewer/index.html' in any JavaScript-enabled browser in order to view the generated maps
